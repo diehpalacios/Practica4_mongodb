@@ -1,0 +1,6 @@
+mongo.user=TU_USUARIO
+mongo.password=TU_CONTRASEÑA
+mongo.host=localhost
+mongo.port=27017
+mongo.authDb=admin
+mongo.database=AD_refugio
