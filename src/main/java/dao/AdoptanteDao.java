@@ -13,7 +13,7 @@ import util.MongoConnection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdoptanteDao implements ICrudDao<Adoptante, String>{
+public class AdoptanteDao implements ICrudDao<Adoptante, String> {
     private MongoCollection<Document> getCollection() throws Exception {
         MongoDatabase db = MongoConnection.getDatabase();
         if (db == null) {
@@ -21,6 +21,7 @@ public class AdoptanteDao implements ICrudDao<Adoptante, String>{
         }
         return db.getCollection("adoptantes");
     }
+
     @Override
     public void create(Adoptante adoptante) throws Exception {
         if (findById(adoptante.getDni()) != null) {
@@ -59,13 +60,19 @@ public class AdoptanteDao implements ICrudDao<Adoptante, String>{
         if (findById(dni) == null) {
             throw new Exception("No existe el adoptante con DNI/NIE: " + dni);
         }
+        if (tieneAdopcionesAsociadas(dni)) {
+            throw new Exception("No se puede dar de baja el adoptante porque está asociado a una o más adopciones. Elimine primero la adopción.");
+        }
         getCollection().updateOne(Filters.eq("dni", dni), Updates.set("activo", false));
     }
 
     @Override
     public void deleteFisico(String dni) throws Exception {
+        if (findById(dni) == null) {
+            throw new Exception("No existe el adoptante con DNI/NIE: " + dni);
+        }
         if (tieneAdopcionesAsociadas(dni)) {
-            throw new Exception("No se puede eliminar físicamente: el adoptante tiene solicitudes o adopciones asociadas. Use la baja lógica.");
+            throw new Exception("No se puede eliminar físicamente el adoptante porque está asociado a una o más adopciones. Elimine primero la adopción.");
         }
         getCollection().deleteOne(Filters.eq("dni", dni));
     }

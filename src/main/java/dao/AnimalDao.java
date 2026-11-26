@@ -61,13 +61,19 @@ public class AnimalDao implements ICrudDao<Animal, String> {
         if (findById(idAnimal) == null) {
             throw new Exception("No existe el animal con ID: " + idAnimal);
         }
+        if (tieneAdopcionesAsociadas(idAnimal)) {
+            throw new Exception("No se puede dar de baja el animal porque está asociado a una o más adopciones. Elimine primero la adopción.");
+        }
         getCollection().updateOne(Filters.eq("idAnimal", idAnimal), Updates.set("activo", false));
     }
 
     @Override
     public void deleteFisico(String idAnimal) throws Exception {
+        if (findById(idAnimal) == null) {
+            throw new Exception("No existe el animal con ID: " + idAnimal);
+        }
         if (tieneAdopcionesAsociadas(idAnimal)) {
-            throw new Exception("No se puede eliminar físicamente: el animal tiene adopciones asociadas. Use la baja lógica.");
+            throw new Exception("No se puede eliminar físicamente el animal porque está asociado a una o más adopciones. Elimine primero la adopción.");
         }
         getCollection().deleteOne(Filters.eq("idAnimal", idAnimal));
     }

@@ -85,6 +85,17 @@ public class AdopcionDao implements ICrudDao<Adopcion, String> {
         if (findById(adopcion.getIdAdopcion()) == null) {
             throw new Exception("No se encontró la adopción con ID: " + adopcion.getIdAdopcion());
         }
+
+        Animal animal = animalDao.findById(adopcion.getIdAnimal());
+        if (animal == null || !animal.isActivo()) {
+            throw new Exception("El animal indicado no existe o esta dado de baja");
+        }
+
+        Adoptante adoptante = adoptanteDao.findById(adopcion.getDniAdoptante());
+        if(adoptante == null || !adoptante.isActivo()) {
+            throw new Exception("El adoptante indicado no existe o esta dado de baja.");
+        }
+
         getCollection().replaceOne(Filters.eq("idAdopcion", adopcion.getIdAdopcion()), adopcion.toDocument());
         sincronizarEstadoAnimal(adopcion);
     }
@@ -117,10 +128,16 @@ public class AdopcionDao implements ICrudDao<Adopcion, String> {
     }
 
     private void sincronizarEstadoAnimal(Adopcion adopcion) throws Exception {
-        if ("aprobada".equalsIgnoreCase(adopcion.getEstado())) {
+        String estadoAdopcion = adopcion.getEstado();
+        if ("aprobada".equalsIgnoreCase(estadoAdopcion)) {
             animalDao.actualizarEstado(adopcion.getIdAnimal(), "adoptado");
-        } else if ("pendiente".equalsIgnoreCase(adopcion.getEstado())) {
+        } else if ("pendiente".equalsIgnoreCase(estadoAdopcion)) {
             animalDao.actualizarEstado(adopcion.getIdAnimal(), "reservado");
+        } else if ("rechazada".equalsIgnoreCase(estadoAdopcion)) {
+            Animal animal = animalDao.findById(adopcion.getIdAnimal());
+            if (animal != null && "reservado".equalsIgnoreCase(animal.getEstado())) {
+                animalDao.actualizarEstado(adopcion.getIdAnimal(), "disponible");
+            }
         }
     }
 }
